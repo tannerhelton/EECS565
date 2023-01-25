@@ -1,4 +1,6 @@
-alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
+import itertools
+
+alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 
 def encrypt(plaintext, key):
     keyLength = len(key)
@@ -20,6 +22,23 @@ def decrypt(ciphertext, key):
         plaintext += chr(shift + 65)
     return plaintext
 
+
+def bruteForce(ciphertext, keyLength, firstWordLength):
+    f = open('MP1_dict.txt')
+    content = f.read().split()
+    f.close()
+    possibleWords = []
+    for j in range(0, keyLength + 1):
+        for subset in itertools.product(alphabet, repeat=keyLength):
+            key = ''.join(subset)
+            plaintext = decrypt(ciphertext, key)
+            if plaintext[0:firstWordLength-1] in content:
+                possibleWords.append([plaintext, key])
+    f = open("output.txt", "w")
+    for i in possibleWords:
+        f.write(i[0] + "    " + i[1] + '\n')
+    f.close()
+
 def main():
     print("Welcome to the Vigenere Cipher Program!")
     print("We strip the message of all whitespace and convert it to uppercase.")
@@ -31,4 +50,5 @@ def main():
     print("Decrypted message:", plaintext)
     print("Created by Tanner Helton. Goodbye!")
 
-main()
+# main()
+bruteForce("RNHF",2,4)

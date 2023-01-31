@@ -30,9 +30,11 @@ def bruteForce(ciphertext, keyLength, firstWordLength):
     f = open('MP1_dict.txt')
     content = f.read().split()
     f.close()
+    
     possibleWords = []
     start_time = time.time()
     for subset in itertools.product(alphabet, repeat=keyLength):
+        print(subset)
         key = ''.join(subset)
         plaintext = decrypt(ciphertext, key)
         if plaintext[0:firstWordLength] in content:
@@ -50,9 +52,17 @@ def main():
         mode = input("Would you like to encrypt (0), decrypt (1), or brute force (2)? ").strip().lower()
         if mode == "0":
             print("Encrypting...")
+            plaintext = input("Enter a message: ").strip().upper()
+            key = input("Enter a key: ").strip().upper()
+            ciphertext = encrypt(plaintext, key)
+            print("Encrypted message:", ciphertext)
             break
         elif mode == "1":
             print("Decrypting...")
+            ciphertext = input("Enter a cipher: ").strip().upper()
+            key = input("Enter a key: ").strip().upper()
+            plaintext = decrypt(ciphertext, key)
+            print("Decrypted message:", plaintext)
             break
         elif mode == "2":
             print("Brute forcing...")
@@ -60,12 +70,6 @@ def main():
             break
         else:
             print("Invalid input. Try again.")
-    # plaintext = input("Enter a message: ").strip().upper()
-    # key = input("Enter a key: ").strip().upper()
-    # ciphertext = encrypt(plaintext, key)
-    # print("Encrypted message:", ciphertext)
-    # plaintext = decrypt(ciphertext, key)
-    # print("Decrypted message:", plaintext)
     print("Created by Tanner Helton. Goodbye!")
 
 def fileStreamIn():

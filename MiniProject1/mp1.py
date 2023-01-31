@@ -1,5 +1,6 @@
 import sys
 import itertools
+import time
 
 alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 
@@ -30,37 +31,57 @@ def bruteForce(ciphertext, keyLength, firstWordLength):
     content = f.read().split()
     f.close()
     possibleWords = []
+    start_time = time.time()
     for subset in itertools.product(alphabet, repeat=keyLength):
         key = ''.join(subset)
         plaintext = decrypt(ciphertext, key)
         if plaintext[0:firstWordLength] in content:
-            possibleWords.append([plaintext, key])
+            possibleWords.append([plaintext, key, ciphertext])
             print(plaintext + "    " + key)
-    f = open("output.txt", "w")
+    outFile = ''
     for i in possibleWords:
-        f.write(i[0] + '\t' + i[1] + '\n')
-    f.close()
+        outFile += i[0] + '\t' + i[1] + '\t' + i[2] + '\t' + str(time.time() - start_time) + '\n'
+    return outFile
 
 def main():
     print("Welcome to the Vigenere Cipher Program!")
     print("We strip the message of all whitespace and convert it to uppercase.")
-    plaintext = input("Enter a message: ").strip().upper()
-    key = input("Enter a key: ").strip().upper()
-    ciphertext = encrypt(plaintext, key)
-    print("Encrypted message:", ciphertext)
-    plaintext = decrypt(ciphertext, key)
-    print("Decrypted message:", plaintext)
+    while True:
+        mode = input("Would you like to encrypt (0), decrypt (1), or brute force (2)? ").strip().lower()
+        if mode == "0":
+            print("Encrypting...")
+            break
+        elif mode == "1":
+            print("Decrypting...")
+            break
+        elif mode == "2":
+            print("Brute forcing...")
+            fileStreamIn()
+            break
+        else:
+            print("Invalid input. Try again.")
+    # plaintext = input("Enter a message: ").strip().upper()
+    # key = input("Enter a key: ").strip().upper()
+    # ciphertext = encrypt(plaintext, key)
+    # print("Encrypted message:", ciphertext)
+    # plaintext = decrypt(ciphertext, key)
+    # print("Decrypted message:", plaintext)
     print("Created by Tanner Helton. Goodbye!")
 
-# main()
-# bruteForce("TEST",1,4)
+def fileStreamIn():
+    inPath = input("Enter the path to the input file: ").strip()
+    outPath = input("Enter the path to the output file: ").strip()
+    f = open(inPath)
+    content = f.read().strip().split('\n')
+    f.close()
+    decryptedCiphers = 'Plaintext\tKey\tCiphertext\tTime\n'
+    for word in content:
+        cipher = word.split('\t')[0]
+        key = word.split('\t')[1]
+        wordLen = word.split('\t')[2]
+        decryptedCiphers += bruteForce(cipher, int(key), int(wordLen))
+    f = open(outPath, "w")
+    f.write(decryptedCiphers)
+    f.close()
 
-fPath = sys.argv[1]
-f = open(fPath)
-content = f.read().strip().split('\n')
-f.close()
-for word in content:
-    cipher = word.split('\t')[0]
-    key = word.split('\t')[1]
-    wordLen = word.split('\t')[2]
-    bruteForce(cipher, int(key), int(wordLen))
+main()

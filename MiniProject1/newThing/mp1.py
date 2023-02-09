@@ -1,71 +1,63 @@
-import itertools
+import string
 import time
 
-ENCRYPT = 0
-DECRYPT = 1
-ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
 def vigenere_cipher(text, key, mode):
-    text = text.upper()
-    key = key.upper()
+    key_len = len(key)
+    key_index = 0
     result = ""
-    j = 0
-    for i in range(len(text)):
-        char = text[i]
-        if char in ALPHABET:
-            shift = ALPHABET.index(key[j % len(key)])
-            if mode == ENCRYPT:
-                result += ALPHABET[(ALPHABET.index(char) + shift) % 26]
-            elif mode == DECRYPT:
-                result += ALPHABET[(ALPHABET.index(char) - shift + 26) % 26]
-            j += 1
+    for char in text:
+        char = char.upper()
+        if char.isalpha():
+            key_char = key[key_index % key_len].upper()
+            key_index += 1
+            if mode == 0:
+                result += chr((ord(char) + ord(key_char) - 2 * ord('A')) % 26 + ord('A'))
+            else:
+                result += chr((ord(char) - ord(key_char) + 26) % 26 + ord('A'))
     return result
 
-def decrypt(ciphertext, key):
-    plaintext = ''
-    key_len = len(key)
-    key_int = [ord(k) - 65 for k in key]
-    ciphertext_int = [ord(c) - 65 if c.isupper() else ord(c) - 97 for c in ciphertext]
-    for i, c in enumerate(ciphertext_int):
-        k = key_int[i % key_len]
-        m = (c - k) % 26
-        plaintext += chr(m + 65) if m < 26 else chr(m + 97)
-    return plaintext
+def encrypt(plaintext, key):
+    return vigenere_cipher(plaintext, key, 0)
 
-def vigenere_brute_force(ciphertext, key_length, first_word_length, dictionary):
-    dictionary = open(dictionary, "r").read().split()
-    tmpDict = []
-    for word in dictionary:
-        if len(word) >= first_word_length:
-            tmpDict.append(word)
-    dictionary = tmpDict
-    start_time = time.time()
-    results = ""
-    key_candidates = [''.join(i) for i in itertools.product(ALPHABET, repeat = key_length)]
-    for key in key_candidates:
+def decrypt(plaintext, key):
+    return vigenere_cipher(plaintext, key, 1)
+
+def brute_force_cracker(ciphertext, key_length, first_word_length, dict_file):
+    with open(dict_file, 'r') as f:
+        words = set(word.strip().upper() for word in f)
+    result = []
+    for i in range(26**key_length):
+        key = ""
+        for j in range(key_length):
+            key += chr(i // (26**j) % 26 + ord('A'))
         plaintext = decrypt(ciphertext, key)
-        if plaintext[:first_word_length] in dictionary:
-            results += ciphertext + ","+key+","+plaintext+","+str(time.time()-start_time)+"\n"
-    return results
+        first_word = plaintext[:first_word_length].upper()
+        if all(char in string.ascii_letters for char in first_word) and first_word in words:
+            result.append((plaintext,key))
+    return result
 
-def driver():
-    f = open("mp1_output.csv", "w")
-    f.write("CipherText,Key,PlainText,Time\n")
-    f.close()
-    f = open("mp1_output.csv", "a")
-    f.write(vigenere_brute_force("MSOKKJCOSXOEEKDTOSLGFWCMCHSUSGX", 2, 6, "MP1_dict.txt"))
-    f.close()
-    f = open("mp1_output.csv", "a")
-    f.write(vigenere_brute_force("PSPDYLOAFSGFREQKKPOERNIYVSDZSUOVGXSRRIPWERDIPCFSDIQZIASEJVCGXAYBGYXFPSREKFMEXEBIYDGFKREOWGXEQSXSKXGYRRRVMEKFFIPIWJSKFDJMBGCC", 3, 7, "MP1_dict.txt"))
-    f.close()
-    f = open("mp1_output.csv", "a")
-    f.write(vigenere_brute_force("MTZHZEOQKASVBDOWMWMKMNYIIHVWPEXJA", 4, 10, "MP1_dict.txt"))
-    f.close()
-    f = open("mp1_output.csv", "a")
-    f.write(vigenere_brute_force("SQLIMXEEKSXMDOSBITOTYVECRDXSCRURZYPOHRG", 5, 11, "MP1_dict.txt"))
-    f.close()
-    f = open("mp1_output.csv", "a")
-    f.write(vigenere_brute_force("LDWMEKPOPSWNOAVBIDHIPCEWAETYRVOAUPSINOVDIEDHCDSELHCCPVHRPOHZUSERSFS", 6, 9, "MP1_dict.txt"))
-    f.close()
+def brute_force_executive(ciphertext, key_length, first_word_length):
+    dict_file = ("MP1_dict.txt")
+    start_time = time.time()
+    result = brute_force_cracker(ciphertext, key_length, first_word_length, dict_file)
+    end_time = time.time()-start_time
+    brute_str = ""
+    for plaintext, key in result:
+        brute_str += ciphertext + ", " + key + ", " + plaintext + ", " + str(end_time) + "\n"
+        print(ciphertext + ", " + key + ", " + plaintext + ", " + str(end_time))
+    return brute_str
 
-driver()
+def main():
+    start_total_time = time.time()
+    result = "Ciphertext, Key, Plaintext, Time\n"
+    # result += brute_force_executive("MSOKKJCOSXOEEKDTOSLGFWCMCHSUSGX",2,6)
+    # result += brute_force_executive("PSPDYLOAFSGFREQKKPOERNIYVSDZSUOVGXSRRIPWERDIPCFSDIQZIASEJVCGXAYBGYXFPSREKFMEXEBIYDGFKREOWGXEQSXSKXGYRRRVMEKFFIPIWJSKFDJMBGCC",3,7)
+    # result += brute_force_executive("MTZHZEOQKASVBDOWMWMKMNYIIHVWPEXJA",4,10)
+    # result += brute_force_executive("SQLIMXEEKSXMDOSBITOTYVECRDXSCRURZYPOHRG",5,11)
+    result += brute_force_executive("LDWMEKPOPSWNOAVBIDHIPCEWAETYRVOAUPSINOVDIEDHCDSELHCCPVHRPOHZUSERSFS",6,9)
+
+    open("output.csv", "w").write(result)
+    print(str(time.time()-start_total_time))
+
+if __name__ == '__main__':
+    main()

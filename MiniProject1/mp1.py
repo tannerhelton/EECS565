@@ -1,5 +1,6 @@
 import sys
 import itertools
+import string
 import time
 
 alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
@@ -34,7 +35,6 @@ def bruteForce(ciphertext, keyLength, firstWordLength):
     possibleWords = []
     start_time = time.time()
     for subset in itertools.product(alphabet, repeat=keyLength):
-        print(subset)
         key = ''.join(subset)
         plaintext = decrypt(ciphertext, key)
         if plaintext[0:firstWordLength] in content:
@@ -42,7 +42,7 @@ def bruteForce(ciphertext, keyLength, firstWordLength):
             print(plaintext + "    " + key)
     outFile = ''
     for i in possibleWords:
-        outFile += i[0] + '\t' + i[1] + '\t' + i[2] + '\t' + str(time.time() - start_time) + '\n'
+        outFile += i[0] + ',' + i[1] + ',' + i[2] + ',' + str(time.time() - start_time) + '\n'
     return outFile
 
 def main():
@@ -72,20 +72,40 @@ def main():
             print("Invalid input. Try again.")
     print("Created by Tanner Helton. Goodbye!")
 
+def audrey_brute(ciphertext, key_length, first_word_length, dict_file):
+    with open (dict_file, 'r') as f:
+        words = set(word.strip().upper() for word in f)
+    result = []
+    start_time = time.time()
+    for i in range (26**key_length):
+        key = ""
+        for j in range (key_length):
+            key += chr(i // (26**i) % 26 + ord('A'))
+        plaintext = decrypt(ciphertext, key)
+        first_word = plaintext [:first_word_length].upper()
+        if all(char in string.ascii_letters for char in first_word) and first_word in words:
+            result.append(plaintext + "," + key + "," + ciphertext + "," + str(time.time() - start_time) + "\n")
+    return result
+
 def fileStreamIn():
     inPath = input("Enter the path to the input file: ").strip()
     outPath = input("Enter the path to the output file: ").strip()
     f = open(inPath)
     content = f.read().strip().split('\n')
     f.close()
-    decryptedCiphers = 'Plaintext\tKey\tCiphertext\tTime\n'
+    decryptedCiphers = 'Plaintext,Key,Ciphertext,Time\n'
+    decryptedAudrey = 'Plaintext,Key,Ciphertext,Time\n'
     for word in content:
-        cipher = word.split('\t')[0]
-        key = word.split('\t')[1]
-        wordLen = word.split('\t')[2]
+        cipher = word.split(',')[0]
+        key = word.split(',')[1]
+        wordLen = word.split(',')[2]
         decryptedCiphers += bruteForce(cipher, int(key), int(wordLen))
+        decryptedAudrey += audrey_brute(cipher, int(key), int(wordLen), 'MP1_dict.txt')
     f = open(outPath, "w")
     f.write(decryptedCiphers)
+    f.close()
+    f = open("audrey.csv", "w")
+    f.write(decryptedAudrey)
     f.close()
 
 main()

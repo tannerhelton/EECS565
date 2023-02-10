@@ -1,0 +1,1 @@
+This is a plaintext file for the task. This text is going to be encrypted with 3 different modes.
